@@ -1,0 +1,108 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int       @id @default(autoincrement())
+  name      String
+  email     String    @unique
+  password  String
+  role      Role      @default(MURID)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  // Relasi: satu user bisa terhubung ke satu data pendaftaran
+  pendaftaranSiswa PendaftaranSiswa?
+}
+
+model PendaftaranSiswa {
+  id                 Int      @id @default(autoincrement())
+  namaLengkap        String
+  nisn               String   @unique
+  tempatLahir        String
+  tanggalLahir       DateTime
+  alamat             String
+  jenjang            Jenjang?  // <--- Tambahan ini
+
+  namaAyah           String
+  namaIbu            String
+  pekerjaanAyah      String
+  pekerjaanIbu       String
+  noTeleponOrtu      String
+
+  asalSekolah        String
+  alamatSekolah      String
+  nilaiUN            Float?
+
+  fileKartuKeluarga  String
+  fileIjazah         String
+  filePasFoto        String
+
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  // userId opsional: hanya akan terisi setelah akun dibuat
+  userId             Int?     @unique
+  user               User?    @relation(fields: [userId], references: [id])
+
+  // Riwayat status pendaftaran (misalnya: diterima, ditolak, pending)
+  status             PendaftaranSiswaStatus[]
+}
+
+model PendaftaranSiswaStatus {
+  id                 Int      @id @default(autoincrement())
+  pendaftaranSiswaId Int
+  status             String
+  keterangan         String?
+  createdAt          DateTime @default(now())
+
+  pendaftaranSiswa   PendaftaranSiswa @relation(fields: [pendaftaranSiswaId], references: [id])
+}
+
+model JadwalKegiatan {
+  id        Int      @id @default(autoincrement())
+  title     String
+  date      DateTime
+  time      String
+  location  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model SeleksiInfo {
+  id                Int           @id @default(autoincrement())
+  bukaPendaftaran   DateTime
+  tutupPendaftaran  DateTime
+  pengumuman        DateTime
+
+  alamatSeleksi     String
+  kota              String
+
+  materiUjian       MateriUjian[] // Relasi ke materi ujian
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+}
+
+model MateriUjian {
+  id          Int         @id @default(autoincrement())
+  seleksiId   Int
+  nama        String
+  deskripsi   String
+
+  seleksi     SeleksiInfo @relation(fields: [seleksiId], references: [id])
+}
+
+enum Role {
+  ADMIN
+  MURID
+}
+
+enum Jenjang {
+  MTS
+  SMA
+}
